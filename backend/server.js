@@ -24,15 +24,22 @@ const upload = multer({
 });
 
 // CORS 配置
-const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'];
+const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
+  'http://localhost:3000',
+  'http://localhost:5173'
+];
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
+    // 在 Vercel 上允许所有 vercel.app 域名
+    if (!origin || 
+        allowedOrigins.includes(origin) || 
+        (origin && origin.includes('.vercel.app'))) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
     }
   },
+  credentials: true
 }));
 
 app.use(express.json());
@@ -215,10 +222,15 @@ app.use((err, req, res, next) => {
   });
 });
 
-// 启动服务器
-app.listen(PORT, () => {
-  console.log(`✅ 服务器启动成功: http://localhost:${PORT}`);
-  console.log(`📝 环境: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🔑 阿里云 AccessKey: ${process.env.ALIYUN_ACCESS_KEY_ID ? '已配置' : '未配置'}`);
-});
+// 启动服务器（仅在非 Vercel 环境下）
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`✅ 服务器启动成功: http://localhost:${PORT}`);
+    console.log(`📝 环境: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`🔑 阿里云 AccessKey: ${process.env.ALIYUN_ACCESS_KEY_ID ? '已配置' : '未配置'}`);
+  });
+}
+
+// 导出 Express app 供 Vercel 使用
+module.exports = app;
 
