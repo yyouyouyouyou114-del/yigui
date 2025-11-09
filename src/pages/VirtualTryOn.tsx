@@ -210,7 +210,7 @@ export default function VirtualTryOn() {
 
     try {
       const compressedBlob = await compressImage(personImage);
-      const thumbnailBlob = await createThumbnail(personImage, 200, 200);
+      const thumbnailBlob = await createThumbnail(personImage, 200);
 
       const compressedBuffer = await compressedBlob.arrayBuffer();
       const thumbnailBuffer = await thumbnailBlob.arrayBuffer();

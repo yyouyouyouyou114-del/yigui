@@ -17,7 +17,7 @@ interface BackendTryOnResult {
 }
 
 // 后端 API 地址（可配置）
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3100';
+const API_BASE_URL = 'http://localhost:3100';
 
 /**
  * 调用后端 API 进行虚拟试穿
@@ -123,7 +123,7 @@ async function base64ToBlob(base64: string): Promise<Blob> {
 export function getApiConfig() {
   return {
     baseUrl: API_BASE_URL,
-    enabled: import.meta.env.VITE_ENABLE_BACKEND_API === 'true',
+    enabled: true,
   };
 }
 

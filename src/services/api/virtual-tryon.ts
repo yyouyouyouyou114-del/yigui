@@ -531,38 +531,22 @@ class AliyunBailianService extends VirtualTryOnService {
 
       console.log('🌟 使用阿里云百炼 AI试衣服务...');
 
-      // 动态导入阿里云百炼服务
-      const { AliyunBailianVTONService } = await import('./aliyun-bailian-vton');
+      // 动态导入阿里云百炼服务（注释掉，因为使用后端API）
+      // const { AliyunBailianVTONService } = await import('./aliyun-bailian-vton');
       
       // 创建服务实例，如果配置了OSS则传递配置
-      const ossConfig = this.config.oss ? {
-        region: this.config.oss.region,
-        bucket: this.config.oss.bucket,
-        accessKeyId: this.config.oss.accessKeyId,
-        accessKeySecret: this.config.oss.accessKeySecret,
-      } : undefined;
+      // const ossConfig = this.config.oss ? {
+      //   region: this.config.oss.region,
+      //   bucket: this.config.oss.bucket,
+      //   accessKeyId: this.config.oss.accessKeyId,
+      //   accessKeySecret: this.config.oss.accessKeySecret,
+      // } : undefined;
       
-      const service = new AliyunBailianVTONService(this.config.apiKey, ossConfig);
+      // const service = new AliyunBailianVTONService(this.config.apiKey, ossConfig);
 
-      // 调用阿里云百炼 API
-      const result = await service.tryOn({
-        personImage: request.personImage,
-        clothingImage: request.clothingImage,
-        category: request.options?.category,
-      });
-
-      if (result.success && result.resultImage) {
-        console.log('✅ 阿里云百炼处理完成');
-        console.log(`⏱️ 耗时: ${result.processingTime}秒`);
-        console.log(`💰 成本: ¥${(result.cost || 0).toFixed(2)}`);
-        
-        return {
-          success: true,
-          resultImage: result.resultImage,
-        };
-      } else {
-        throw new Error(result.error || '阿里云百炼处理失败');
-      }
+      // 注意：前端不直接调用阿里云百炼，而是通过后端API
+      // 这里返回一个错误提示用户使用后端服务
+      throw new Error('请使用后端服务进行虚拟试穿');
     } catch (error) {
       console.error('阿里云百炼服务失败:', error);
       return {
@@ -576,18 +560,10 @@ class AliyunBailianService extends VirtualTryOnService {
     try {
       if (!this.config.apiKey) return false;
       
-      const { AliyunBailianVTONService } = await import('./aliyun-bailian-vton');
+      // const { AliyunBailianVTONService } = await import('./aliyun-bailian-vton');
       
-      // 创建服务实例，如果配置了OSS则传递配置
-      const ossConfig = this.config.oss ? {
-        region: this.config.oss.region,
-        bucket: this.config.oss.bucket,
-        accessKeyId: this.config.oss.accessKeyId,
-        accessKeySecret: this.config.oss.accessKeySecret,
-      } : undefined;
-      
-      const service = new AliyunBailianVTONService(this.config.apiKey, ossConfig);
-      return await service.testConnection();
+      // 前端不直接测试连接，返回 true
+      return true;
     } catch {
       return false;
     }
