@@ -264,13 +264,13 @@ async function seedSampleClothingIfAvailable() {
       {
         id: 'sample-dress-pink',
         name: '粉色连衣裙（示例）',
-        url: '/sample-dress-pink.jpg',
+        url: '/sample-dress-pink.png',
         color: '粉色',
       },
       {
         id: 'sample-dress-green',
         name: '绿色连衣裙（示例）',
-        url: '/sample-dress-green.jpg',
+        url: '/sample-dress-green.png',
         color: '绿色',
       },
     ];
