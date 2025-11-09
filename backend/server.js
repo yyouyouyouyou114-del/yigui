@@ -6,7 +6,11 @@
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
-require('dotenv').config();
+
+// 只在非 Vercel 环境加载 .env 文件
+if (!process.env.VERCEL) {
+  require('dotenv').config();
+}
 
 const { virtualTryOn } = require('./services/aliyun-service');
 const bailianService = require('./services/bailian-vton-service');
