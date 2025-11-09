@@ -17,7 +17,10 @@ interface BackendTryOnResult {
 }
 
 // 后端 API 地址（可配置）
-const API_BASE_URL = 'http://localhost:3100';
+// 根据环境自动选择后端 URL
+const API_BASE_URL = typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+  ? '' // 生产环境使用相对路径（同域）
+  : 'http://localhost:3100'; // 开发环境
 
 /**
  * 调用后端 API 进行虚拟试穿

@@ -43,7 +43,9 @@ class CustomAPIService extends VirtualTryOnService {
       formData.append('clothing', request.clothingImage);
 
       // 注意：CustomAPIService 未使用，这里注释掉避免类型错误
-      const apiEndpoint = (this.config as any).apiEndpoint || 'http://localhost:3100';
+      const defaultEndpoint = typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+        ? '' : 'http://localhost:3100';
+      const apiEndpoint = (this.config as any).apiEndpoint || defaultEndpoint;
       const response = await fetch(apiEndpoint, {
         method: 'POST',
         headers: {
@@ -73,7 +75,9 @@ class CustomAPIService extends VirtualTryOnService {
 
   async testConnection(): Promise<boolean> {
     try {
-      const apiEndpoint = (this.config as any).apiEndpoint || 'http://localhost:3100';
+      const defaultEndpoint = typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+        ? '' : 'http://localhost:3100';
+      const apiEndpoint = (this.config as any).apiEndpoint || defaultEndpoint;
       const response = await fetch(`${apiEndpoint}/health`, {
         headers: {
           'Authorization': `Bearer ${this.config.apiKey}`,

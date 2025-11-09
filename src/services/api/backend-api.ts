@@ -3,7 +3,12 @@
  * 所有配置都在后端，前端无需管理敏感信息
  */
 
-const BACKEND_URL = 'http://localhost:3100';
+// 根据环境自动选择后端 URL
+const BACKEND_URL = typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+  ? '' // 生产环境使用相对路径（同域）
+  : 'http://localhost:3100'; // 开发环境
+
+export { BACKEND_URL };
 
 /**
  * 统一的错误处理
