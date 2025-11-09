@@ -1,0 +1,43 @@
+{
+  "name": "smart-wardrobe",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "dev:fixed": "node scripts/ensure-port-free.cjs 5173 && vite --port 5173 --strictPort",
+    "build": "tsc && vite build",
+    "vercel-build": "npm run build",
+    "preview": "vite preview",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
+  },
+  "dependencies": {
+    "@imgly/background-removal": "^1.7.0",
+    "@tensorflow/tfjs": "^4.15.0",
+    "ali-oss": "^6.23.0",
+    "canvas-confetti": "^1.9.2",
+    "clsx": "^2.1.0",
+    "date-fns": "^3.0.6",
+    "idb": "^8.0.0",
+    "lucide-react": "^0.300.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.20.1",
+    "zustand": "^4.4.7"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.45",
+    "@types/react-dom": "^18.2.18",
+    "@typescript-eslint/eslint-plugin": "^6.15.0",
+    "@typescript-eslint/parser": "^6.15.0",
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.16",
+    "eslint": "^8.56.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.5",
+    "postcss": "^8.4.32",
+    "tailwindcss": "^3.4.0",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.10"
+  }
+}
