@@ -3,7 +3,10 @@
  * 定期检查后端服务状态，自动重连，提供友好的错误提示
  */
 
-const BACKEND_URL = 'http://localhost:3100';
+// 根据环境自动选择后端 URL
+const BACKEND_URL = typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+  ? '' // 生产环境使用相对路径（同域）
+  : 'http://localhost:3100'; // 开发环境
 const HEALTH_CHECK_INTERVAL = 30000; // 30秒检查一次
 const RETRY_INTERVAL = 5000; // 重试间隔5秒
 
