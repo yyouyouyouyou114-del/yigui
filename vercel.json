@@ -6,18 +6,17 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "/api/index.cjs"
+      "destination": "/api/index.js"
     },
     {
       "source": "/health",
-      "destination": "/api/index.cjs"
+      "destination": "/api/index.js"
     }
   ],
   "functions": {
-    "api/**/*.cjs": {
+    "api/**/*.js": {
       "memory": 1024,
-      "maxDuration": 60,
-      "runtime": "nodejs18.x"
+      "maxDuration": 60
     }
   },
   "env": {
