@@ -251,9 +251,11 @@ async function virtualTryOn({ personImage, clothingImage, topClothingImage, bott
       };
     } else if (response.data.output && response.data.output.image_url) {
       // 同步模式：直接返回结果
+      // 强制使用 HTTPS（避免混合内容错误）
+      const secureUrl = response.data.output.image_url.replace(/^http:/, 'https:');
       return {
         success: true,
-        resultUrl: response.data.output.image_url,
+        resultUrl: secureUrl,
         status: 'completed',
         message: '试穿成功',
       };
@@ -296,10 +298,12 @@ async function getTaskResult(taskId) {
           error: '任务成功但未返回图片URL',
         };
       }
+      // 强制使用 HTTPS（避免混合内容错误）
+      const secureUrl = imageUrl.replace(/^http:/, 'https:');
       return {
         success: true,
         status: 'completed',
-        resultUrl: imageUrl,
+        resultUrl: secureUrl,
       };
     } else if (task.task_status === 'FAILED') {
       return {
