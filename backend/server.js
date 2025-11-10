@@ -34,12 +34,17 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
 ];
 app.use(cors({
   origin: (origin, callback) => {
-    // 在 Vercel 上允许所有 vercel.app 域名
+    // 允许以下来源：
+    // 1. 无 origin（同域请求）
+    // 2. localhost（开发环境）
+    // 3. .vercel.app 域名（Vercel 预览部署）
+    // 4. youyou.pw 域名（自定义域名）
     if (!origin || 
         allowedOrigins.includes(origin) || 
-        (origin && origin.includes('.vercel.app'))) {
+        (origin && (origin.includes('.vercel.app') || origin.includes('.youyou.pw')))) {
       callback(null, true);
     } else {
+      console.warn('CORS blocked origin:', origin);
       callback(new Error('Not allowed by CORS'));
     }
   },
