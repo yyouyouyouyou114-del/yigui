@@ -3,7 +3,7 @@
   "name": "smart-wardrobe",
   "builds": [
     {
-      "src": "api/index.js",
+      "src": "api/index.cjs",
       "use": "@vercel/node",
       "config": {
         "includeFiles": ["backend/**"]
@@ -20,11 +20,11 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/api/index.js"
+      "dest": "/api/index.cjs"
     },
     {
       "src": "/health",
-      "dest": "/api/index.js"
+      "dest": "/api/index.cjs"
     },
     {
       "handle": "filesystem"
@@ -35,7 +35,7 @@
     }
   ],
   "functions": {
-    "api/index.js": {
+    "api/index.cjs": {
       "memory": 1024,
       "maxDuration": 60
     }
