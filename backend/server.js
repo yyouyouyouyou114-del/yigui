@@ -50,7 +50,18 @@ app.use(express.json());
 
 // 健康检查
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', message: '智能衣柜后端服务运行中' });
+  res.json({ 
+    status: 'ok', 
+    message: '智能衣柜后端服务运行中',
+    env: {
+      hasBailianKey: !!process.env.ALIYUN_BAILIAN_API_KEY,
+      hasAccessKeyId: !!process.env.ALIYUN_ACCESS_KEY_ID,
+      hasAccessKeySecret: !!process.env.ALIYUN_ACCESS_KEY_SECRET,
+      hasOssBucket: !!process.env.OSS_BUCKET,
+      hasOssRegion: !!process.env.OSS_REGION,
+      bailianKeyPrefix: process.env.ALIYUN_BAILIAN_API_KEY ? process.env.ALIYUN_BAILIAN_API_KEY.substring(0, 8) + '...' : 'missing',
+    }
+  });
 });
 
 // 获取配置信息（不暴露敏感信息）
