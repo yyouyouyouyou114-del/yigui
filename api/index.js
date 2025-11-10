@@ -1,6 +1,7 @@
 /**
  * Vercel Serverless Function - 后端 API 入口
  * 使用 ES Module 语法以兼容 Vercel 环境
+ * Updated: 2025-01-10
  */
 
 import { fileURLToPath } from 'url';
