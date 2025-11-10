@@ -4,14 +4,42 @@
  * Vercel 要求导出一个处理函数，而不是直接导出 Express app
  */
 
+const path = require('path');
+
 let app;
 
 try {
-  // 加载 Express app
-  app = require('../backend/server');
-  console.log('✅ Backend server loaded successfully');
+  console.log('🔧 Loading backend server...');
+  console.log('📁 Current directory:', __dirname);
+  console.log('📁 Process cwd:', process.cwd());
+  
+  // 尝试多种路径方式加载 backend/server
+  const possiblePaths = [
+    '../backend/server',
+    './backend/server',
+    path.join(__dirname, '../backend/server'),
+    path.join(process.cwd(), 'backend/server')
+  ];
+  
+  let loadError;
+  for (const serverPath of possiblePaths) {
+    try {
+      console.log(`🔍 Trying to load: ${serverPath}`);
+      app = require(serverPath);
+      console.log(`✅ Backend server loaded successfully from: ${serverPath}`);
+      break;
+    } catch (err) {
+      console.log(`❌ Failed to load from ${serverPath}:`, err.message);
+      loadError = err;
+    }
+  }
+  
+  if (!app) {
+    throw loadError || new Error('Failed to load backend server from any path');
+  }
 } catch (error) {
-  console.error('❌ Failed to load backend server:', error);
+  console.error('❌ FATAL: Failed to load backend server:', error);
+  console.error('Stack:', error.stack);
   throw error;
 }
 
