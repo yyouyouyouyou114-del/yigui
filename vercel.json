@@ -1,54 +1,28 @@
 {
   "version": 2,
-  "name": "smart-wardrobe",
-  "builds": [
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "installCommand": "npm install && cd backend && npm install",
+  "rewrites": [
     {
-      "src": "api/index.cjs",
-      "use": "@vercel/node",
-      "config": {
-        "includeFiles": ["backend/**"]
-      }
+      "source": "/api/:path*",
+      "destination": "/api/index.cjs"
     },
     {
-      "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "dist"
-      }
-    }
-  ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/index.cjs"
-    },
-    {
-      "src": "/health",
-      "dest": "/api/index.cjs"
-    },
-    {
-      "handle": "filesystem"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/dist/$1"
+      "source": "/health",
+      "destination": "/api/index.cjs"
     }
   ],
   "functions": {
-    "api/index.cjs": {
+    "api/**/*.cjs": {
       "memory": 1024,
-      "maxDuration": 60
+      "maxDuration": 60,
+      "runtime": "nodejs18.x"
     }
   },
   "env": {
     "NODE_ENV": "production",
     "VERCEL": "1"
-  },
-  "build": {
-    "env": {
-      "NODE_ENV": "production"
-    }
-  },
-  "installCommand": "npm install && cd backend && npm install"
+  }
 }
 
