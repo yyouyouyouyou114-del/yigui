@@ -133,25 +133,34 @@ export async function getTaskResult(taskId: string) {
  */
 export async function pollTaskResult(
   taskId: string,
-  maxAttempts = 30,
-  interval = 2000
+  maxAttempts = 60,  // 增加到 60 次（最多 60 秒）
+  interval = 1000    // 减少到 1 秒（更快响应）
 ): Promise<any> {
+  console.log(`🔄 开始轮询任务结果，任务ID: ${taskId}`);
+  
   for (let i = 0; i < maxAttempts; i++) {
+    console.log(`⏱️  第 ${i + 1}/${maxAttempts} 次查询...`);
+    
     const result = await getTaskResult(taskId);
 
     if (result.success && result.status === 'completed') {
+      console.log(`✅ 任务完成！总耗时: ${(i + 1) * interval / 1000} 秒`);
       return result;
     }
 
     if (!result.success || result.status === 'failed') {
+      console.error(`❌ 任务失败:`, result.error);
       throw new Error(result.error || '任务失败');
     }
 
+    console.log(`⏳ 任务仍在处理中 (${result.status})，等待 ${interval}ms...`);
+    
     // 等待一段时间后继续查询
     await new Promise(resolve => setTimeout(resolve, interval));
   }
 
-  throw new Error('任务超时');
+  console.error(`❌ 任务超时（已查询 ${maxAttempts} 次，共 ${maxAttempts * interval / 1000} 秒）`);
+  throw new Error('任务超时（超过 60 秒）');
 }
 
 

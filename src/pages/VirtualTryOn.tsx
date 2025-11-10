@@ -415,15 +415,16 @@ export default function VirtualTryOn() {
 
       // 处理异步任务
       if (response.taskId && response.status === 'processing') {
-        console.log('任务已提交，任务ID:', response.taskId);
-        alert('✅ 任务已提交！正在处理中，请稍候...');
+        console.log('✅ 任务已提交，任务ID:', response.taskId);
+        console.log('🎨 AI 正在处理中，预计需要 10-30 秒...');
         
-        // 轮询任务结果
+        // 轮询任务结果（每秒查询一次）
         const taskResult = await BackendAPI.pollTaskResult(response.taskId);
         
-        console.log('任务完成:', taskResult);
+        console.log('✅ 任务完成:', taskResult);
         
         // 下载结果图片
+        console.log('📥 正在下载结果图片...');
         const resultResponse = await fetch(taskResult.resultUrl);
         const resultBlob = await resultResponse.blob();
         
@@ -432,7 +433,7 @@ export default function VirtualTryOn() {
           resultImage: resultBlob,
         });
         
-        alert('🎉 试穿完成！');
+        console.log('🎉 试穿完成！');
       } else if (response.resultUrl) {
         // 同步模式：直接获取结果
         const resultResponse = await fetch(response.resultUrl);
