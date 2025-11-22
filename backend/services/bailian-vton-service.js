@@ -35,13 +35,40 @@ function createOSSClient() {
 }
 
 /**
+ * 检查 OSS 配置
+ */
+function checkOSSConfig() {
+  const missing = [];
+  if (!OSS_ACCESS_KEY_ID) missing.push('ALIYUN_ACCESS_KEY_ID');
+  if (!OSS_ACCESS_KEY_SECRET) missing.push('ALIYUN_ACCESS_KEY_SECRET');
+  if (!OSS_BUCKET) missing.push('OSS_BUCKET');
+  if (!OSS_REGION) missing.push('OSS_REGION');
+  
+  if (missing.length > 0) {
+    return {
+      valid: false,
+      error: `OSS 配置不完整，缺少以下环境变量：${missing.join(', ')}。请检查 backend/.env 文件。`
+    };
+  }
+  
+  return { valid: true };
+}
+
+/**
  * 上传图片到 OSS（带重试机制）
  */
 async function uploadToOSS(buffer, filename, retries = 3) {
+  // 先检查配置
+  const configCheck = checkOSSConfig();
+  if (!configCheck.valid) {
+    throw new Error(configCheck.error);
+  }
+  
   const client = createOSSClient();
   const objectName = `tryon/${Date.now()}-${filename}`;
   
   console.log(`上传图片到 OSS: ${objectName}`);
+  console.log(`使用 Bucket: ${OSS_BUCKET}, Region: ${OSS_REGION}`);
   
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
@@ -63,9 +90,24 @@ async function uploadToOSS(buffer, filename, retries = 3) {
     } catch (error) {
       console.error(`OSS 上传失败（尝试 ${attempt}/${retries}）:`, error.message);
       
+      // 特殊处理 bucket 不存在的错误
+      if (error.message && error.message.includes('bucket does not exist')) {
+        throw new Error(
+          `OSS Bucket "${OSS_BUCKET}" 不存在。请检查：\n` +
+          `1. 在阿里云OSS控制台确认Bucket名称是否正确\n` +
+          `2. 确认Bucket所在的Region是否与配置的 ${OSS_REGION} 一致\n` +
+          `3. 确认AccessKey是否有该Bucket的访问权限\n` +
+          `4. 如果Bucket不存在，请在OSS控制台创建Bucket`
+        );
+      }
+      
       if (attempt === retries) {
-        // 最后一次尝试失败，抛出错误
-        throw new Error(`OSS 上传失败（已重试${retries}次）: ${error.message}`);
+        // 最后一次尝试失败，抛出更详细的错误
+        let errorMsg = `OSS 上传失败（已重试${retries}次）: ${error.message}`;
+        if (error.code) {
+          errorMsg += ` (错误代码: ${error.code})`;
+        }
+        throw new Error(errorMsg);
       }
       
       // 等待后重试（指数退避）
@@ -331,20 +373,38 @@ async function testConnection() {
     if (!BAILIAN_API_KEY) {
       return {
         success: false,
-        message: '百炼 API Key 未配置',
+        message: '百炼 API Key 未配置，请在 backend/.env 文件中设置 ALIYUN_BAILIAN_API_KEY',
       };
     }
 
-    if (!OSS_ACCESS_KEY_ID || !OSS_ACCESS_KEY_SECRET || !OSS_BUCKET || !OSS_REGION) {
+    // 检查 OSS 配置
+    const configCheck = checkOSSConfig();
+    if (!configCheck.valid) {
       return {
         success: false,
-        message: 'OSS 配置不完整',
+        message: configCheck.error,
+        details: {
+          hasAccessKeyId: !!OSS_ACCESS_KEY_ID,
+          hasAccessKeySecret: !!OSS_ACCESS_KEY_SECRET,
+          hasBucket: !!OSS_BUCKET,
+          hasRegion: !!OSS_REGION,
+        },
       };
     }
 
-    // 测试 OSS 连接
+    // 测试 OSS 连接和 Bucket 是否存在
     const client = createOSSClient();
-    await client.list({ 'max-keys': 1 });
+    try {
+      await client.list({ 'max-keys': 1 });
+    } catch (ossError) {
+      if (ossError.message && ossError.message.includes('bucket does not exist')) {
+        return {
+          success: false,
+          message: `OSS Bucket "${OSS_BUCKET}" 不存在。请检查：\n1. 在阿里云OSS控制台确认Bucket名称是否正确\n2. 确认Bucket所在的Region是否与配置的 ${OSS_REGION} 一致\n3. 确认AccessKey是否有该Bucket的访问权限`,
+        };
+      }
+      throw ossError;
+    }
 
     return {
       success: true,

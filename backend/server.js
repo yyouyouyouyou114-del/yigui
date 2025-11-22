@@ -6,11 +6,15 @@
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
-require('dotenv').config();
+const path = require('path');
+// 明确指定 .env 文件路径，确保从 backend 目录加载
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const { virtualTryOn } = require('./services/aliyun-service');
 const bailianService = require('./services/bailian-vton-service');
 const { rateLimiter } = require('./middleware/rate-limiter');
+const { initDatabase, testConnection } = require('./services/db');
+const clothingService = require('./services/clothing-service');
 
 const app = express();
 const PORT = process.env.PORT || 3100;
@@ -215,10 +219,321 @@ app.use((err, req, res, next) => {
   });
 });
 
+// ==================== 衣物管理 API ====================
+
+// 获取所有衣物
+app.get('/api/clothing', async (req, res) => {
+  try {
+    const clothing = await clothingService.getAllClothing();
+    res.json({
+      success: true,
+      data: clothing,
+    });
+  } catch (error) {
+    console.error('获取衣物列表失败:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取衣物列表失败',
+    });
+  }
+});
+
+// 根据ID获取衣物
+app.get('/api/clothing/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const clothing = await clothingService.getClothingById(id);
+    
+    if (!clothing) {
+      return res.status(404).json({
+        success: false,
+        error: '衣物不存在',
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: clothing,
+    });
+  } catch (error) {
+    console.error('获取衣物失败:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取衣物失败',
+    });
+  }
+});
+
+// 获取衣物图片
+app.get('/api/clothing/:id/image', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const imageInfo = await clothingService.getClothingImage(id);
+    
+    if (!imageInfo || !imageInfo.imageData) {
+      return res.status(404).json({
+        success: false,
+        error: '图片不存在',
+      });
+    }
+    
+    // 设置响应头
+    res.setHeader('Content-Type', 'image/jpeg');
+    res.setHeader('Content-Length', imageInfo.imageData.length);
+    res.send(imageInfo.imageData);
+  } catch (error) {
+    console.error('获取衣物图片失败:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取衣物图片失败',
+    });
+  }
+});
+
+// 添加衣物
+app.post('/api/clothing', upload.single('image'), async (req, res) => {
+  try {
+    const {
+      name,
+      category,
+      color,
+      brand,
+      price,
+      seasons, // JSON 字符串数组
+      tags,    // JSON 字符串数组
+      occasions, // JSON 字符串数组
+    } = req.body;
+
+    // 验证必填字段
+    if (!name || !category || !color) {
+      return res.status(400).json({
+        success: false,
+        error: '缺少必填字段：名称、类别、颜色',
+      });
+    }
+
+    // 解析 JSON 字段
+    let seasonsArray = [];
+    let tagsArray = [];
+    let occasionsArray = [];
+
+    try {
+      seasonsArray = seasons ? JSON.parse(seasons) : [];
+      tagsArray = tags ? JSON.parse(tags) : [];
+      occasionsArray = occasions ? JSON.parse(occasions) : [];
+    } catch (parseError) {
+      return res.status(400).json({
+        success: false,
+        error: 'JSON 字段格式错误',
+      });
+    }
+
+    // 处理图片
+    let imageData = null;
+    if (req.file) {
+      imageData = req.file.buffer;
+    }
+
+    const clothingData = {
+      name,
+      category,
+      color,
+      brand: brand || null,
+      price: price ? parseFloat(price) : null,
+      seasons: seasonsArray,
+      tags: tagsArray,
+      occasions: occasionsArray,
+      imageData,
+      imagePath: null, // 如果以后需要存储到文件系统或OSS，可以在这里设置
+    };
+
+    const id = await clothingService.addClothing(clothingData);
+
+    res.json({
+      success: true,
+      data: { id },
+      message: '衣物添加成功',
+    });
+  } catch (error) {
+    console.error('添加衣物失败:', error);
+    res.status(500).json({
+      success: false,
+      error: '添加衣物失败',
+    });
+  }
+});
+
+// 更新衣物
+app.put('/api/clothing/:id', upload.single('image'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      name,
+      category,
+      color,
+      brand,
+      price,
+      seasons,
+      tags,
+      occasions,
+    } = req.body;
+
+    // 解析 JSON 字段
+    let seasonsArray = [];
+    let tagsArray = [];
+    let occasionsArray = [];
+
+    try {
+      seasonsArray = seasons ? JSON.parse(seasons) : [];
+      tagsArray = tags ? JSON.parse(tags) : [];
+      occasionsArray = occasions ? JSON.parse(occasions) : [];
+    } catch (parseError) {
+      return res.status(400).json({
+        success: false,
+        error: 'JSON 字段格式错误',
+      });
+    }
+
+    // 处理图片（如果上传了新图片）
+    let imageData = null;
+    if (req.file) {
+      imageData = req.file.buffer;
+    }
+
+    const clothingData = {
+      name,
+      category,
+      color,
+      brand: brand || null,
+      price: price ? parseFloat(price) : null,
+      seasons: seasonsArray,
+      tags: tagsArray,
+      occasions: occasionsArray,
+      imageData,
+      imagePath: null,
+    };
+
+    await clothingService.updateClothing(id, clothingData);
+
+    res.json({
+      success: true,
+      message: '衣物更新成功',
+    });
+  } catch (error) {
+    console.error('更新衣物失败:', error);
+    res.status(500).json({
+      success: false,
+      error: '更新衣物失败',
+    });
+  }
+});
+
+// 删除衣物
+app.delete('/api/clothing/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await clothingService.deleteClothing(id);
+
+    res.json({
+      success: true,
+      message: '衣物删除成功',
+    });
+  } catch (error) {
+    console.error('删除衣物失败:', error);
+    res.status(500).json({
+      success: false,
+      error: '删除衣物失败',
+    });
+  }
+});
+
+// 根据类别查询衣物
+app.get('/api/clothing/category/:category', async (req, res) => {
+  try {
+    const { category } = req.params;
+    const clothing = await clothingService.getClothingByCategory(category);
+    
+    res.json({
+      success: true,
+      data: clothing,
+    });
+  } catch (error) {
+    console.error('查询衣物失败:', error);
+    res.status(500).json({
+      success: false,
+      error: '查询衣物失败',
+    });
+  }
+});
+
+// 根据季节查询衣物
+app.get('/api/clothing/season/:season', async (req, res) => {
+  try {
+    const { season } = req.params;
+    const clothing = await clothingService.getClothingBySeason(season);
+    
+    res.json({
+      success: true,
+      data: clothing,
+    });
+  } catch (error) {
+    console.error('查询衣物失败:', error);
+    res.status(500).json({
+      success: false,
+      error: '查询衣物失败',
+    });
+  }
+});
+
+// ==================== 数据库初始化 ====================
+
+// 初始化数据库（仅在开发环境或手动调用）
+app.post('/api/init-db', async (req, res) => {
+  try {
+    await initDatabase();
+    res.json({
+      success: true,
+      message: '数据库初始化成功',
+    });
+  } catch (error) {
+    console.error('数据库初始化失败:', error);
+    res.status(500).json({
+      success: false,
+      error: '数据库初始化失败: ' + error.message,
+    });
+  }
+});
+
+// 测试数据库连接
+app.get('/api/test-db', async (req, res) => {
+  try {
+    const connected = await testConnection();
+    res.json({
+      success: connected,
+      message: connected ? '数据库连接正常' : '数据库连接失败',
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: '数据库连接测试失败: ' + error.message,
+    });
+  }
+});
+
 // 启动服务器
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`✅ 服务器启动成功: http://localhost:${PORT}`);
   console.log(`📝 环境: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🔑 阿里云 AccessKey: ${process.env.ALIYUN_ACCESS_KEY_ID ? '已配置' : '未配置'}`);
+  
+  // 自动初始化数据库
+  try {
+    console.log('🔧 正在初始化数据库...');
+    await initDatabase();
+    await testConnection();
+  } catch (error) {
+    console.error('⚠️  数据库初始化失败，请检查配置:', error.message);
+    console.log('💡 提示：可以访问 POST /api/init-db 手动初始化数据库');
+  }
 });
 

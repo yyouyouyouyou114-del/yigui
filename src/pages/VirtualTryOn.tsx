@@ -972,18 +972,18 @@ export default function VirtualTryOn() {
               {/* 衣物列表 */}
               <div className="max-h-[350px] overflow-y-auto space-y-2">
                 {clothing.map((item) => {
-                  const isTop = ['上衣', 'T恤', '衬衫', '毛衣', '外套'].some(type => 
-                    item.category.includes(type) || item.name.includes(type)
-                  );
-                  const isBottom = ['裤子', '裙子', '短裤', '牛仔裤'].some(type => 
-                    item.category.includes(type) || item.name.includes(type)
-                  );
+                  // 基于类别值判断，更准确可靠
+                  // 上装：top（上衣）和 outerwear（外套）
+                  const isTop = item.category === 'top' || item.category === 'outerwear';
+                  // 下装：bottom（裤装/下装）
+                  const isBottom = item.category === 'bottom';
                   
                   const sampleUrl = getSampleClothingUrl(item.id, item.name, item.color, item.tags);
                   const imgSrc = sampleUrl || (item.imageData.byteLength > 0 
                     ? URL.createObjectURL(new Blob([item.thumbnailData || item.imageData]))
                     : sampleUrl);
                   
+                  // 只显示上装和下装，其他类别（连衣裙、鞋履、配饰）不显示
                   if (!imgSrc || (!isTop && !isBottom)) return null;
 
                   return (

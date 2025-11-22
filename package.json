@@ -7,7 +7,6 @@
     "dev": "vite",
     "dev:fixed": "node scripts/ensure-port-free.cjs 5173 && vite --port 5173 --strictPort",
     "build": "tsc && vite build",
-    "vercel-build": "npm run build",
     "preview": "vite preview",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
   },
